@@ -3,9 +3,13 @@ import { ArcaneBackdrop } from "./arcane-ui";
 import { checkAuth, loadLedger, logout, saveLedger } from "./api";
 import LoginGate from "./LoginGate";
 import LedgerApp from "./LedgerApp";
+import MoonTracker from "./MoonTracker";
+
+type VaultPage = "ledger" | "moon";
 
 export default function App() {
   const [authState, setAuthState] = useState<"loading" | "locked" | "unlocked">("loading");
+  const [page, setPage] = useState<VaultPage>("ledger");
 
   useEffect(() => {
     checkAuth().then((ok) => setAuthState(ok ? "unlocked" : "locked"));
@@ -33,9 +37,14 @@ export default function App() {
     return <LoginGate onSuccess={handleUnlock} />;
   }
 
+  if (page === "moon") {
+    return <MoonTracker onBack={() => setPage("ledger")} onLogout={handleLogout} />;
+  }
+
   return (
     <LedgerApp
       onLogout={handleLogout}
+      onOpenMoonTracker={() => setPage("moon")}
       loadLedger={loadLedger}
       saveLedger={saveLedger}
     />
