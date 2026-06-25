@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  calcMonthlyOperatingCost,
-  calcStartupCost,
-  calcWeeklyOperatingCost,
+  buildDefaultOperatingCosts,
   DEFAULT_CONFIG,
   getOutcome,
   ledgerTotalsFromHistory,
   ROLL_OUTCOMES,
+  resolveOperatingCosts,
   rollD6,
   simulateWeek,
+  sumOperatingCostLines,
 } from "./mineLogic";
 import { CoinIcon, CurrencyDisplay } from "./CurrencyDisplay";
 import { breakDownGp, formatCoinBreakdown } from "./currency";
 import { InfuseCapitalForm } from "./InfuseCapitalForm";
+import OperatingCostsPanel from "./OperatingCostsPanel";
 import {
   ArcaneBackdrop,
   ArcanePanel,
@@ -24,6 +25,7 @@ import type {
   GameState,
   InfusionLedgerEntry,
   LedgerEntry,
+  OperatingCostLine,
   SavedLedger,
   WeekLedgerEntry,
 } from "./types";
@@ -100,15 +102,6 @@ const TONE_STYLES: Record<string, string> = {
   excellent: "text-amber-300 border-amber-400/50 bg-amber-950/30",
   rich: "text-yellow-200 border-yellow-400/60 bg-yellow-950/30 animate-pulse-glow",
 };
-
-function CostRow({ label, valueGp }: { label: string; valueGp: number }) {
-  return (
-    <div className="flex justify-between gap-4 border-b border-brass/10 py-1.5 text-sm">
-      <span className="text-parchment-dark">{label}</span>
-      <CurrencyDisplay amountGp={valueGp} size="sm" className="text-brass-light" />
-    </div>
-  );
-}
 
 function CompactCoins({ amountGp, className = "" }: { amountGp: number; className?: string }) {
   const negative = amountGp < 0;
@@ -432,15 +425,16 @@ function LedgerHistory({
 
 function toSnapshot(
   state: GameState,
-  guardCount: number,
   startingTreasury: number,
+  startupCostLines: OperatingCostLine[],
+  weeklyCostLines: OperatingCostLine[],
 ): SavedLedger {
-  const config = { ...state.config, guardCount, startingTreasuryGp: startingTreasury };
+  const startupCostGp = sumOperatingCostLines(startupCostLines);
   const { treasuryGp, week } = ledgerTotalsFromHistory(
     state.history,
-    config,
     startingTreasury,
     state.startupPaid,
+    startupCostGp,
   );
 
   return {
@@ -448,8 +442,10 @@ function toSnapshot(
     week,
     startupPaid: state.startupPaid,
     history: state.history,
-    guardCount,
+    guardCount: DEFAULT_CONFIG.guardCount,
     startingTreasury,
+    startupCostLines,
+    weeklyCostLines,
   };
 }
 
@@ -476,9 +472,15 @@ export default function LedgerApp({
     isRolling: false,
   }));
 
-  const [guardCount, setGuardCount] = useState(DEFAULT_CONFIG.guardCount);
   const [startingTreasury, setStartingTreasury] = useState(
     DEFAULT_CONFIG.startingTreasuryGp,
+  );
+  const defaultCosts = useMemo(() => buildDefaultOperatingCosts(), []);
+  const [startupCostLines, setStartupCostLines] = useState<OperatingCostLine[]>(
+    () => defaultCosts.startup.map((line) => ({ ...line })),
+  );
+  const [weeklyCostLines, setWeeklyCostLines] = useState<OperatingCostLine[]>(
+    () => defaultCosts.weekly.map((line) => ({ ...line })),
   );
   const [hydrated, setHydrated] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -491,16 +493,12 @@ export default function LedgerApp({
       .then((saved) => {
         if (saved) {
           const history = normalizeLedgerHistory(saved.history as unknown[]);
-          const config = {
-            ...DEFAULT_CONFIG,
-            guardCount: saved.guardCount,
-            startingTreasuryGp: saved.startingTreasury,
-          };
+          const operatingCosts = resolveOperatingCosts(saved);
           const { treasuryGp, week } = ledgerTotalsFromHistory(
             history,
-            config,
             saved.startingTreasury,
             saved.startupPaid,
+            sumOperatingCostLines(operatingCosts.startup),
           );
 
           setState((s) => ({
@@ -512,8 +510,9 @@ export default function LedgerApp({
             lastRoll: null,
             isRolling: false,
           }));
-          setGuardCount(saved.guardCount);
           setStartingTreasury(saved.startingTreasury);
+          setStartupCostLines(operatingCosts.startup);
+          setWeeklyCostLines(operatingCosts.weekly);
         }
       })
       .finally(() => {
@@ -523,8 +522,8 @@ export default function LedgerApp({
   }, [loadLedger]);
 
   const snapshot = useMemo(
-    () => toSnapshot(state, guardCount, startingTreasury),
-    [state, guardCount, startingTreasury],
+    () => toSnapshot(state, startingTreasury, startupCostLines, weeklyCostLines),
+    [state, startingTreasury, startupCostLines, weeklyCostLines],
   );
 
   useEffect(() => {
@@ -552,17 +551,17 @@ export default function LedgerApp({
     return () => window.clearTimeout(timer);
   }, [snapshot, hydrated, saveLedger]);
 
-  const config = useMemo(
-    () => ({ ...state.config, guardCount, startingTreasuryGp: startingTreasury }),
-    [state.config, guardCount, startingTreasury],
-  );
-
-  const startupCost = calcStartupCost(config);
-  const weeklyCost = calcWeeklyOperatingCost(config);
-  const monthlyCost = calcMonthlyOperatingCost(config);
+  const startupCost = sumOperatingCostLines(startupCostLines);
+  const weeklyCost = sumOperatingCostLines(weeklyCostLines);
   const { treasuryGp, week: ledgerWeek } = useMemo(
-    () => ledgerTotalsFromHistory(state.history, config, startingTreasury, state.startupPaid),
-    [state.history, config, startingTreasury, state.startupPaid],
+    () =>
+      ledgerTotalsFromHistory(
+        state.history,
+        startingTreasury,
+        state.startupPaid,
+        startupCost,
+      ),
+    [state.history, startingTreasury, state.startupPaid, startupCost],
   );
   const netToDate = treasuryGp - startingTreasury;
 
@@ -571,23 +570,21 @@ export default function LedgerApp({
     if (treasuryGp < startupCost) return;
     setStartupCelebrating(true);
     setState((s) => {
-      const nextConfig = { ...s.config, guardCount, startingTreasuryGp: startingTreasury };
       const { treasuryGp, week } = ledgerTotalsFromHistory(
         s.history,
-        nextConfig,
         startingTreasury,
         true,
+        startupCost,
       );
       return {
         ...s,
         startupPaid: true,
         treasuryGp,
         week,
-        config: nextConfig,
       };
     });
     window.setTimeout(() => setStartupCelebrating(false), 2800);
-  }, [state.startupPaid, treasuryGp, startupCost, guardCount, startingTreasury]);
+  }, [state.startupPaid, treasuryGp, startupCost, startingTreasury]);
 
   const runWeek = useCallback(() => {
     if (!state.startupPaid || state.isRolling) return;
@@ -603,15 +600,15 @@ export default function LedgerApp({
         clearInterval(interval);
         const finalRoll = rollD6();
         const weekNum = ledgerWeek + 1;
-        const record = simulateWeek(config, weekNum, finalRoll);
+        const record = simulateWeek(weeklyCost, weekNum, finalRoll);
 
         setState((s) => {
           const history = [record, ...s.history];
           const { treasuryGp, week } = ledgerTotalsFromHistory(
             history,
-            config,
             startingTreasury,
             s.startupPaid,
+            startupCost,
           );
           return {
             ...s,
@@ -624,9 +621,12 @@ export default function LedgerApp({
         });
       }
     }, 80);
-  }, [state.startupPaid, state.isRolling, treasuryGp, ledgerWeek, weeklyCost, config, startingTreasury]);
+  }, [state.startupPaid, state.isRolling, treasuryGp, ledgerWeek, weeklyCost, startingTreasury, startupCost]);
 
   const reset = useCallback(() => {
+    const defaults = buildDefaultOperatingCosts();
+    setStartupCostLines(defaults.startup.map((line) => ({ ...line })));
+    setWeeklyCostLines(defaults.weekly.map((line) => ({ ...line })));
     setState({
       config: DEFAULT_CONFIG,
       treasuryGp: startingTreasury,
@@ -656,12 +656,11 @@ export default function LedgerApp({
         detail: formatCoinBreakdown(amountGp),
       };
       const history = [entry, ...s.history];
-      const mineConfig = { ...s.config, guardCount, startingTreasuryGp: startingTreasury };
       const { treasuryGp, week } = ledgerTotalsFromHistory(
         history,
-        mineConfig,
         startingTreasury,
         s.startupPaid,
+        startupCost,
       );
       return {
         ...s,
@@ -670,7 +669,7 @@ export default function LedgerApp({
         week,
       };
     });
-  }, [startingTreasury, guardCount, ledgerWeek]);
+  }, [startingTreasury, ledgerWeek, startupCost]);
 
   const rerollWeekEntry = useCallback(
     (entryId: string) => {
@@ -692,26 +691,21 @@ export default function LedgerApp({
         const current = s.history[index];
         if (!isWeekEntry(current) || current.week !== ledgerWeek) return s;
 
-        const mineConfig = {
-          ...s.config,
-          guardCount,
-          startingTreasuryGp: startingTreasury,
-        };
-        const rerolled = simulateWeek(mineConfig, current.week, rollD6());
+        const rerolled = simulateWeek(weeklyCost, current.week, rollD6());
         const history = [...s.history];
         history[index] = { ...rerolled, id: current.id };
 
         const { treasuryGp, week } = ledgerTotalsFromHistory(
           history,
-          mineConfig,
           startingTreasury,
           s.startupPaid,
+          startupCost,
         );
 
         return { ...s, history, treasuryGp, week, lastRoll: rerolled.roll };
       });
     },
-    [state.history, ledgerWeek, startingTreasury, guardCount],
+    [state.history, ledgerWeek, startingTreasury, weeklyCost, startupCost],
   );
 
   const voidEntry = useCallback(
@@ -726,21 +720,16 @@ export default function LedgerApp({
 
       setState((s) => {
         const history = s.history.filter((entry) => entry.id !== entryId);
-        const mineConfig = {
-          ...s.config,
-          guardCount,
-          startingTreasuryGp: startingTreasury,
-        };
         const { treasuryGp, week } = ledgerTotalsFromHistory(
           history,
-          mineConfig,
           startingTreasury,
           s.startupPaid,
+          startupCost,
         );
         return { ...s, history, treasuryGp, week };
       });
     },
-    [startingTreasury, guardCount],
+    [startingTreasury, startupCost],
   );
 
   const saveLabel =
@@ -907,62 +896,13 @@ export default function LedgerApp({
           />
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <ArcanePanel>
-              <h2 className="mb-3 font-display text-sm font-bold tracking-wider text-brass uppercase">
-                Cogspanner &amp; Co. Operating Costs
-              </h2>
-              <p className="mb-3 text-xs text-parchment-dark italic">
-                Per DM notes — startup + weekly upkeep
-              </p>
-
-              <p className="mb-1 font-display text-xs text-brass uppercase">One-Time Startup</p>
-              <CostRow label="New mining tools" valueGp={150} />
-              <CostRow label="Lantern oil (initial)" valueGp={40} />
-              <CostRow label="Food (initial)" valueGp={60} />
-              <CostRow label="Draft animals" valueGp={50} />
-              <CostRow label="Ore carts" valueGp={50} />
-              <div className="mt-2 flex justify-between border-t border-brass/30 pt-2 font-semibold text-brass-light">
-                <span>Startup total</span>
-                <CurrencyDisplay amountGp={startupCost} size="sm" />
-              </div>
-
-              <p className="mt-4 mb-1 font-display text-xs text-brass uppercase">
-                Weekly Payroll &amp; Supplies
-              </p>
-              <CostRow label="Delgado (2 gp/day)" valueGp={config.delgadoGpPerDay * 7} />
-              <CostRow
-                label="Miners (3 sp × 8/day)"
-                valueGp={config.minerSpPerDay * config.minerCount * 7 * 0.1}
-              />
-              <CostRow
-                label={`Guards (2 gp/day × ${guardCount})`}
-                valueGp={config.guardGpPerDay * guardCount * 7}
-              />
-              <CostRow label="Cook (1 gp/day)" valueGp={config.cookGpPerDay * 7} />
-              <CostRow
-                label="Bookkeeper (2 gp/day)"
-                valueGp={config.bookkeeperGpPerDay * 7}
-              />
-              <CostRow label="Lantern oil (10 gp/mo)" valueGp={(10 / 30) * 7} />
-              <CostRow label="Food (30 gp/mo)" valueGp={(30 / 30) * 7} />
-              <div className="mt-2 flex justify-between border-t border-brass/30 pt-2 font-semibold text-brass-light">
-                <span>Weekly operating</span>
-                <CurrencyDisplay amountGp={weeklyCost} size="sm" />
-              </div>
-              <div className="mt-1 flex justify-between text-sm text-parchment-dark">
-                <span>≈ Monthly</span>
-                <CurrencyDisplay amountGp={monthlyCost} size="sm" />
-              </div>
-
-              <div className="mt-4 flex flex-wrap gap-3 border-t border-brass/20 pt-3 text-[10px] text-parchment-dark">
-                {(["pp", "gp", "ep", "sp", "cp"] as const).map((type) => (
-                  <span key={type} className="inline-flex items-center gap-1">
-                    <CoinIcon type={type} size={11} />
-                    {type}
-                  </span>
-                ))}
-              </div>
-            </ArcanePanel>
+            <OperatingCostsPanel
+              startupLines={startupCostLines}
+              weeklyLines={weeklyCostLines}
+              onStartupLinesChange={setStartupCostLines}
+              onWeeklyLinesChange={setWeeklyCostLines}
+              startupLocked={state.startupPaid}
+            />
 
             <ArcanePanel>
               <h2 className="mb-3 font-display text-sm font-bold tracking-wider text-brass uppercase">
@@ -977,18 +917,6 @@ export default function LedgerApp({
                   value={startingTreasury}
                   onChange={(e) => setStartingTreasury(Number(e.target.value))}
                   disabled={ledgerWeek > 0 || state.startupPaid}
-                  className="mt-1 w-full rounded border border-brass/40 bg-panel px-3 py-2 text-brass-light outline-none focus:border-brass disabled:opacity-50"
-                />
-              </label>
-              <label className="block text-sm">
-                <span className="text-parchment-dark">Guards on payroll</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={guardCount}
-                  onChange={(e) => setGuardCount(Number(e.target.value))}
-                  disabled={ledgerWeek > 0}
                   className="mt-1 w-full rounded border border-brass/40 bg-panel px-3 py-2 text-brass-light outline-none focus:border-brass disabled:opacity-50"
                 />
               </label>

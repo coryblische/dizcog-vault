@@ -1,3 +1,14 @@
+export interface OperatingCostLine {
+  id: string;
+  label: string;
+  amountGp: number;
+}
+
+export interface OperatingCosts {
+  startup: OperatingCostLine[];
+  weekly: OperatingCostLine[];
+}
+
 export interface MineConfig {
   miningToolsGp: number;
   lanternOilInitialGp: number;
@@ -95,6 +106,8 @@ export interface SavedLedger {
   history: LedgerEntry[];
   guardCount: number;
   startingTreasury: number;
+  startupCostLines?: OperatingCostLine[];
+  weeklyCostLines?: OperatingCostLine[];
   savedAt?: string;
 }
 

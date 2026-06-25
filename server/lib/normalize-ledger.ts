@@ -1,4 +1,9 @@
-import { DEFAULT_CONFIG, ledgerTotalsFromHistory } from "../../src/mineLogic.ts";
+import {
+  DEFAULT_CONFIG,
+  ledgerTotalsFromHistory,
+  resolveOperatingCosts,
+  sumOperatingCostLines,
+} from "../../src/mineLogic.ts";
 import { normalizeLedgerHistory } from "../../src/types.ts";
 
 export function normalizeSavedLedger(raw: Record<string, unknown>): Record<string, unknown> {
@@ -10,12 +15,17 @@ export function normalizeSavedLedger(raw: Record<string, unknown>): Record<strin
       ? raw.startingTreasury
       : DEFAULT_CONFIG.startingTreasuryGp;
   const startupPaid = Boolean(raw.startupPaid);
-  const config = { ...DEFAULT_CONFIG, guardCount, startingTreasuryGp: startingTreasury };
+  const operatingCosts = resolveOperatingCosts({
+    startupCostLines: raw.startupCostLines,
+    weeklyCostLines: raw.weeklyCostLines,
+    guardCount,
+  });
+  const startupCostGp = sumOperatingCostLines(operatingCosts.startup);
   const { treasuryGp, week } = ledgerTotalsFromHistory(
     history,
-    config,
     startingTreasury,
     startupPaid,
+    startupCostGp,
   );
 
   return {
@@ -26,5 +36,7 @@ export function normalizeSavedLedger(raw: Record<string, unknown>): Record<strin
     guardCount,
     startingTreasury,
     startupPaid,
+    startupCostLines: operatingCosts.startup,
+    weeklyCostLines: operatingCosts.weekly,
   };
 }
