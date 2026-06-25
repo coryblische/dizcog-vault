@@ -44,6 +44,18 @@ export const YEAR_SEGMENTS: YearSegment[] = [
   { kind: "month", monthIndex: 11 },
 ];
 
+export interface CampaignEpoch {
+  year: number;
+  monthIndex: number;
+  dayOfMonth: number;
+}
+
+export const DEFAULT_CAMPAIGN_EPOCH: CampaignEpoch = {
+  year: DEFAULT_EPOCH_YEAR,
+  monthIndex: 0,
+  dayOfMonth: 1,
+};
+
 export interface HarptosDate {
   year: number;
   dayOfYear: number;
@@ -65,6 +77,33 @@ export interface MonthDayCell {
 
 function segmentLength(segment: YearSegment): number {
   return segment.kind === "month" ? DAYS_PER_MONTH : 1;
+}
+
+export function harptosToTimelineDay(
+  year: number,
+  monthIndex: number,
+  dayOfMonth: number,
+): number {
+  const safeDay = Math.min(DAYS_PER_MONTH, Math.max(1, Math.floor(dayOfMonth)));
+  return harptosMonthStartAbsoluteDay(year, monthIndex, DEFAULT_EPOCH_YEAR) + safeDay - 1;
+}
+
+export function campaignEpochToTimelineDay(epoch: CampaignEpoch): number {
+  return harptosToTimelineDay(epoch.year, epoch.monthIndex, epoch.dayOfMonth);
+}
+
+export function timelineDayToCampaignDay(
+  timelineDay: number,
+  epoch: CampaignEpoch,
+): number {
+  return timelineDay - campaignEpochToTimelineDay(epoch) + 1;
+}
+
+export function campaignDayToTimelineDay(
+  campaignDay: number,
+  epoch: CampaignEpoch,
+): number {
+  return campaignEpochToTimelineDay(epoch) + Math.max(1, Math.floor(campaignDay)) - 1;
 }
 
 export function absoluteDayToHarptos(
@@ -172,4 +211,104 @@ export function nextFullMoonAbsoluteDay(absoluteDay: number): number {
 export function lastFullMoonAbsoluteDay(absoluteDay: number): number {
   const since = daysSinceLastFullMoon(absoluteDay);
   return since === 0 ? absoluteDay : absoluteDay - since;
+}
+
+export const LUNAR_DAY_STORAGE_KEY = "dizcog-lunar-day";
+export const CAMPAIGN_DAY_STORAGE_KEY = "dizcog-campaign-day";
+export const CAMPAIGN_EPOCH_STORAGE_KEY = "dizcog-campaign-epoch";
+export const LUNAR_TIMELINE_FLAG_KEY = "dizcog-lunar-uses-timeline";
+
+export const DEFAULT_CAMPAIGN_DAY = 21;
+
+/** Default calendar position: 21 Hammer DR 1372 */
+export const DEFAULT_TIMELINE_DAY = campaignDayToTimelineDay(
+  DEFAULT_CAMPAIGN_DAY,
+  DEFAULT_CAMPAIGN_EPOCH,
+);
+
+export function loadCampaignEpoch(): CampaignEpoch {
+  if (typeof window === "undefined") return { ...DEFAULT_CAMPAIGN_EPOCH };
+  try {
+    const raw = localStorage.getItem(CAMPAIGN_EPOCH_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_CAMPAIGN_EPOCH };
+    const parsed = JSON.parse(raw) as CampaignEpoch;
+    if (
+      typeof parsed.year === "number" &&
+      typeof parsed.monthIndex === "number" &&
+      typeof parsed.dayOfMonth === "number" &&
+      parsed.monthIndex >= 0 &&
+      parsed.monthIndex < HARPTOS_MONTHS.length
+    ) {
+      return {
+        year: Math.floor(parsed.year),
+        monthIndex: parsed.monthIndex,
+        dayOfMonth: Math.min(DAYS_PER_MONTH, Math.max(1, Math.floor(parsed.dayOfMonth))),
+      };
+    }
+  } catch {
+    // ignore corrupt storage
+  }
+  return { ...DEFAULT_CAMPAIGN_EPOCH };
+}
+
+export function saveCampaignEpoch(epoch: CampaignEpoch): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(CAMPAIGN_EPOCH_STORAGE_KEY, JSON.stringify(epoch));
+}
+
+export function loadCampaignDay(epoch: CampaignEpoch = loadCampaignEpoch()): number {
+  if (typeof window === "undefined") return DEFAULT_CAMPAIGN_DAY;
+
+  const campaignRaw = localStorage.getItem(CAMPAIGN_DAY_STORAGE_KEY);
+  if (campaignRaw) {
+    const parsed = Number(campaignRaw);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      return Math.floor(parsed);
+    }
+  }
+
+  const timeline = loadTimelineDay(epoch);
+  return Math.max(1, timelineDayToCampaignDay(timeline, epoch));
+}
+
+export function saveCampaignDay(campaignDay: number): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(
+    CAMPAIGN_DAY_STORAGE_KEY,
+    String(Math.max(1, Math.floor(campaignDay))),
+  );
+}
+
+/** Random Harptos date for campaign day 1 — typical post–Time of Troubles DR range. */
+export function randomCampaignEpoch(
+  yearMin = 1358,
+  yearMax = 1494,
+): CampaignEpoch {
+  const year = yearMin + Math.floor(Math.random() * (yearMax - yearMin + 1));
+  const monthIndex = Math.floor(Math.random() * HARPTOS_MONTHS.length);
+  const dayOfMonth = 1 + Math.floor(Math.random() * DAYS_PER_MONTH);
+  return { year, monthIndex, dayOfMonth };
+}
+
+export function loadTimelineDay(epoch: CampaignEpoch = loadCampaignEpoch()): number {
+  if (typeof window === "undefined") return DEFAULT_TIMELINE_DAY;
+  const raw = localStorage.getItem(LUNAR_DAY_STORAGE_KEY);
+  const parsed = raw ? Number(raw) : NaN;
+
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return DEFAULT_TIMELINE_DAY;
+  }
+
+  const usesTimeline = localStorage.getItem(LUNAR_TIMELINE_FLAG_KEY) === "1";
+  if (!usesTimeline) {
+    return campaignDayToTimelineDay(Math.floor(parsed), epoch);
+  }
+
+  return Math.floor(parsed);
+}
+
+export function saveTimelineDay(timelineDay: number): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LUNAR_DAY_STORAGE_KEY, String(Math.max(1, Math.floor(timelineDay))));
+  localStorage.setItem(LUNAR_TIMELINE_FLAG_KEY, "1");
 }

@@ -165,17 +165,3 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
     partyNote,
   };
 }
-
-export const LUNAR_DAY_STORAGE_KEY = "dizcog-lunar-day";
-
-export function loadLunarDay(): number {
-  if (typeof window === "undefined") return DEFAULT_LUNAR_DAY;
-  const raw = localStorage.getItem(LUNAR_DAY_STORAGE_KEY);
-  const parsed = raw ? Number(raw) : DEFAULT_LUNAR_DAY;
-  return Number.isFinite(parsed) && parsed >= 1 ? Math.floor(parsed) : DEFAULT_LUNAR_DAY;
-}
-
-export function saveLunarDay(day: number): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(LUNAR_DAY_STORAGE_KEY, String(day));
-}
