@@ -1,8 +1,26 @@
 {
-  "treasuryGp": 1357.6,
-  "week": 3,
+  "treasuryGp": 1618.4666666666667,
+  "week": 4,
   "startupPaid": true,
   "history": [
+    {
+      "kind": "week",
+      "id": "week-4",
+      "week": 4,
+      "roll": 5,
+      "outcome": {
+        "roll": 5,
+        "name": "Excellent",
+        "description": "Rich haul from the deep shafts",
+        "profitGp": null,
+        "isSpecial": false,
+        "tone": "excellent"
+      },
+      "grossProfitGp": 350,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": 260.8666666666667,
+      "detail": "Exceptional haul: 300 gp + 50 gp bonus = 350 gp"
+    },
     {
       "kind": "week",
       "id": "week-3",
@@ -67,5 +85,5 @@
   ],
   "guardCount": 2,
   "startingTreasury": 500,
-  "savedAt": "2026-06-25T18:46:01.589Z"
+  "savedAt": "2026-06-25T18:46:16.211Z"
 }
