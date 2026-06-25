@@ -12,6 +12,7 @@ import {
   sessionCookieHeader,
 } from "./lib/auth.js";
 import { readLedger, writeLedger } from "./lib/ledger-store.js";
+import { readMoonTracker, writeMoonTracker, type SavedMoonTracker } from "./lib/moon-store.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, "..");
@@ -77,6 +78,39 @@ async function handleAuth(req: IncomingMessage, res: ServerResponse) {
   }
 
   sendJson(res, 405, { error: "Method not allowed" });
+}
+
+async function handleMoonTracker(req: IncomingMessage, res: ServerResponse) {
+  if (!isAuthenticated(req.headers.cookie)) {
+    sendJson(res, 401, { error: "Unauthorized" });
+    return;
+  }
+
+  try {
+    if (req.method === "GET") {
+      const moonTracker = await readMoonTracker();
+      sendJson(res, 200, { moonTracker: moonTracker ?? null });
+      return;
+    }
+
+    if (req.method === "PUT") {
+      const { moonTracker } = JSON.parse(await readBody(req)) as { moonTracker?: unknown };
+      if (!moonTracker || typeof moonTracker !== "object") {
+        sendJson(res, 400, { error: "Missing moon tracker payload" });
+        return;
+      }
+
+      await writeMoonTracker(moonTracker as SavedMoonTracker);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    sendJson(res, 405, { error: "Method not allowed" });
+  } catch (error) {
+    console.error("Moon tracker error:", error);
+    const message = error instanceof Error ? error.message : "Storage error";
+    sendJson(res, 500, { error: message });
+  }
 }
 
 async function handleLedger(req: IncomingMessage, res: ServerResponse) {
@@ -178,6 +212,11 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse) {
 
   if (url === "/api/ledger" || url.startsWith("/api/ledger?")) {
     await handleLedger(req, res);
+    return;
+  }
+
+  if (url === "/api/moon-tracker" || url.startsWith("/api/moon-tracker?")) {
+    await handleMoonTracker(req, res);
     return;
   }
 

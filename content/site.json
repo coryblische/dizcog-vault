@@ -2,5 +2,9 @@
   "companyName": "Cogspanner & Co., Inc.",
   "vaultTitle": "DizCog™ Arcane Vault",
   "loginBlurb": "DizCog™ Arcanoglyphic Cipher Seal® guards the company ledger with the power of Mystra, Rock, and Stone. Tap the rune sequence and enter.",
-  "ledgerSubtitle": "Weekly Income Ledger — Diz Cogspanner"
+  "ledgerSubtitle": "Weekly Income Ledger — Diz Cogspanner",
+  "moonTrackerIntro": "This chronometer binds three dates to Selûne's wheel: when the expedition began, where the party stands upon the Calendar of Harptos today, and the day the wererats drew blood. Set them in order — the lunar grid and lycanthropy warnings follow.",
+  "moonTrackerEpochBlurb": "The Harptos date that counts as campaign day 1. All other dates are measured from here.",
+  "moonTrackerTodayBlurb": "The party's present date in Faerûn — month, day, and year on the Calendar of Harptos.",
+  "moonTrackerInfectedBlurb": "When three of the company failed their saves against the wererat bite. Marked in red on the calendar below. After the first full moon following this date, the curse takes hold per the Monster Manual."
 }

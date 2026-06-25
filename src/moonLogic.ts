@@ -2,6 +2,7 @@
 
 export const LUNAR_CYCLE_DAYS = 27;
 export const FULL_MOON_CYCLE_DAY = 27;
+export const FULL_MOON_APPROACH_DAYS = 3;
 export const DEFAULT_LUNAR_DAY = 21;
 export const INFECTED_PARTY_COUNT = 3;
 
@@ -66,6 +67,11 @@ export function daysUntilFullMoon(absoluteDay: number): number {
   return rem === 0 ? 0 : LUNAR_CYCLE_DAYS - rem;
 }
 
+export function nextFullMoonAbsoluteDay(absoluteDay: number): number {
+  const rem = absoluteDay % LUNAR_CYCLE_DAYS;
+  return rem === 0 ? absoluteDay : absoluteDay + (LUNAR_CYCLE_DAYS - rem);
+}
+
 function phaseFromCycleDay(cycleDay: number): { phase: LunarPhase; phaseLabel: string } {
   if (cycleDay === FULL_MOON_CYCLE_DAY) {
     return { phase: "full", phaseLabel: "Full Moon" };
@@ -107,15 +113,23 @@ export function getLunarPhaseInfo(absoluteDay: number): LunarPhaseInfo {
 }
 
 /** 5e MM lycanthropy — wererat curse, full-moon involuntary change. */
-export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | null {
-  if (absoluteDay < FULL_MOON_CYCLE_DAY) return null;
+export function getLycanthropyEffects(
+  timelineDay: number,
+  biteTimelineDay: number,
+): LycanthropyEffect | null {
+  if (timelineDay < biteTimelineDay) return null;
 
-  const phase = getLunarPhaseInfo(absoluteDay);
+  const firstFullMoon = nextFullMoonAbsoluteDay(biteTimelineDay);
+  if (timelineDay < firstFullMoon) return null;
+
+  const phase = getLunarPhaseInfo(timelineDay);
+  const fullMoonsSinceBite =
+    Math.floor((timelineDay - firstFullMoon) / LUNAR_CYCLE_DAYS) + 1;
   const partyNote = `${INFECTED_PARTY_COUNT} party members carry wererat lycanthropy (failed DC 11 Con save on bite).`;
 
   if (phase.isFullMoonNight) {
     return {
-      heading: `Full Moon — ${phase.phaseLabel}`,
+      heading: "Full Moon Night",
       severity: "critical",
       summary:
         "When the full moon rises, the curse becomes too strong to resist. Each afflicted character involuntarily transforms.",
@@ -144,7 +158,7 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
         "Fragmented memories or nightmares of the transformation may surface.",
         "Bestial urges remain buried but present — roleplay as desired.",
         "Next involuntary transformation: full moon in " +
-          `${daysUntilFullMoon(absoluteDay)} day${daysUntilFullMoon(absoluteDay) === 1 ? "" : "s"}.`,
+          `${daysUntilFullMoon(timelineDay)} day${daysUntilFullMoon(timelineDay) === 1 ? "" : "s"}.`,
       ],
       partyNote,
     };
@@ -160,7 +174,7 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
       "Deep bestial urges may surface in roleplay but do not force a transformation yet.",
       `Next full moon in ${phase.daysUntilFullMoon} day${phase.daysUntilFullMoon === 1 ? "" : "s"}.`,
       "Remove curse: remove curse or similar magic (MM p.207).",
-      `${phase.fullMoonsElapsed} full moon${phase.fullMoonsElapsed === 1 ? "" : "s"} since tracking began.`,
+      `${fullMoonsSinceBite} full moon${fullMoonsSinceBite === 1 ? "" : "s"} since the bite.`,
     ],
     partyNote,
   };

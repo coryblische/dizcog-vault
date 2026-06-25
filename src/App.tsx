@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { ArcaneBackdrop } from "./arcane-ui";
-import { checkAuth, loadLedger, logout, saveLedger } from "./api";
+import { checkAuth, loadLedger, loadMoonTracker, logout, saveLedger, saveMoonTracker } from "./api";
 import LoginGate from "./LoginGate";
 import LedgerApp from "./LedgerApp";
 import MoonTracker from "./MoonTracker";
@@ -38,7 +38,14 @@ export default function App() {
   }
 
   if (page === "moon") {
-    return <MoonTracker onBack={() => setPage("ledger")} onLogout={handleLogout} />;
+    return (
+      <MoonTracker
+        onBack={() => setPage("ledger")}
+        onLogout={handleLogout}
+        loadMoonTracker={loadMoonTracker}
+        saveMoonTracker={saveMoonTracker}
+      />
+    );
   }
 
   return (

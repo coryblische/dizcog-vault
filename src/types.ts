@@ -97,3 +97,14 @@ export interface SavedLedger {
   startingTreasury: number;
   savedAt?: string;
 }
+
+export interface SavedMoonTracker {
+  epoch: {
+    year: number;
+    monthIndex: number;
+    dayOfMonth: number;
+  };
+  campaignDay: number;
+  biteDay: number;
+  savedAt?: string;
+}

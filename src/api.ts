@@ -1,4 +1,4 @@
-import type { SavedLedger } from "./types";
+import type { SavedLedger, SavedMoonTracker } from "./types";
 
 const API = "/api";
 
@@ -77,6 +77,33 @@ export async function saveLedger(ledger: SavedLedger): Promise<{ ok: true } | { 
     credentials: "include",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ ledger }),
+  });
+
+  if (res.status === 401) return { ok: false, error: "Session expired — unlock vault again" };
+
+  const data = await readJson<{ error?: string }>(res);
+  if (!res.ok) return { ok: false, error: apiError(res, data) };
+
+  return { ok: true };
+}
+
+export async function loadMoonTracker(): Promise<SavedMoonTracker | null> {
+  const res = await fetch(`${API}/moon-tracker`, { credentials: "include" });
+  if (res.status === 401) throw new Error("Unauthorized");
+  if (!res.ok) throw new Error("Failed to load moon tracker");
+
+  const data = await readJson<{ moonTracker: SavedMoonTracker | null }>(res);
+  return data?.moonTracker ?? null;
+}
+
+export async function saveMoonTracker(
+  moonTracker: SavedMoonTracker,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const res = await fetch(`${API}/moon-tracker`, {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ moonTracker }),
   });
 
   if (res.status === 401) return { ok: false, error: "Session expired — unlock vault again" };

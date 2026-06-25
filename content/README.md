@@ -7,6 +7,7 @@ Vault data lives in Git — not a separate database.
 | `game.json` | Mine costs, d6 table | DM via PR (rebuild to apply) |
 | `site.json` | Labels and flavor copy | DM via PR (rebuild to apply) |
 | `ledger.json` | Live campaign treasury + history | **App only** (autosave) |
+| `moon-tracker.json` | Harptos dates — campaign start, today, infection | **App only** (autosave) |
 
 ## Ledger rules
 
@@ -19,6 +20,8 @@ The ledger is **append-only** in the app:
 
 Do not hand-edit `ledger.json` in Git. Use the vault UI or void and re-enter.
 
-Set `GITHUB_TOKEN` + `GITHUB_REPO` on Render so autosaves commit here. Without them, the server writes `content/ledger.json` on disk (ephemeral on free Render).
+Same for `moon-tracker.json` — set dates in Moon Tracker; autosave writes here.
 
-**Note:** `ledger.json` contains campaign state. Use a **private** repo if you do not want treasury data public.
+Set `GITHUB_TOKEN` + `GITHUB_REPO` on Render so autosaves commit here. Without them, the server writes `content/ledger.json` and `content/moon-tracker.json` on disk (ephemeral on free Render).
+
+**Note:** `ledger.json` and `moon-tracker.json` contain campaign state. Use a **private** repo if you do not want treasury data public.

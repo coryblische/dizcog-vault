@@ -51,8 +51,8 @@ export interface CampaignEpoch {
 }
 
 export const DEFAULT_CAMPAIGN_EPOCH: CampaignEpoch = {
-  year: DEFAULT_EPOCH_YEAR,
-  monthIndex: 0,
+  year: 1492,
+  monthIndex: 4,
   dayOfMonth: 1,
 };
 
@@ -73,6 +73,7 @@ export interface MonthDayCell {
   phase: LunarPhase;
   phaseSymbol: string;
   isToday: boolean;
+  isInfected: boolean;
 }
 
 function segmentLength(segment: YearSegment): number {
@@ -179,6 +180,7 @@ export function getMonthCalendarDays(
   year: number,
   monthIndex: number,
   todayAbsoluteDay: number,
+  infectedAbsoluteDay?: number,
   epochYear = DEFAULT_EPOCH_YEAR,
 ): MonthDayCell[] {
   const startAbs = harptosMonthStartAbsoluteDay(year, monthIndex, epochYear);
@@ -194,6 +196,7 @@ export function getMonthCalendarDays(
       phase,
       phaseSymbol: moonPhaseSymbol(phase),
       isToday: absoluteDay === todayAbsoluteDay,
+      isInfected: infectedAbsoluteDay != null && absoluteDay === infectedAbsoluteDay,
     };
   });
 }
@@ -215,12 +218,14 @@ export function lastFullMoonAbsoluteDay(absoluteDay: number): number {
 
 export const LUNAR_DAY_STORAGE_KEY = "dizcog-lunar-day";
 export const CAMPAIGN_DAY_STORAGE_KEY = "dizcog-campaign-day";
+export const BITE_DAY_STORAGE_KEY = "dizcog-bite-day";
 export const CAMPAIGN_EPOCH_STORAGE_KEY = "dizcog-campaign-epoch";
 export const LUNAR_TIMELINE_FLAG_KEY = "dizcog-lunar-uses-timeline";
 
 export const DEFAULT_CAMPAIGN_DAY = 21;
+export const DEFAULT_BITE_DAY = 21;
 
-/** Default calendar position: 21 Hammer DR 1372 */
+/** Default "today" — 21 Mirtul 1492 DR (~three tendays into the BG3 year) */
 export const DEFAULT_TIMELINE_DAY = campaignDayToTimelineDay(
   DEFAULT_CAMPAIGN_DAY,
   DEFAULT_CAMPAIGN_EPOCH,
@@ -277,6 +282,25 @@ export function saveCampaignDay(campaignDay: number): void {
     CAMPAIGN_DAY_STORAGE_KEY,
     String(Math.max(1, Math.floor(campaignDay))),
   );
+}
+
+export function loadBiteDay(): number {
+  if (typeof window === "undefined") return DEFAULT_BITE_DAY;
+
+  const raw = localStorage.getItem(BITE_DAY_STORAGE_KEY);
+  if (!raw) return DEFAULT_BITE_DAY;
+
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed) && parsed >= 1) {
+    return Math.floor(parsed);
+  }
+
+  return DEFAULT_BITE_DAY;
+}
+
+export function saveBiteDay(biteDay: number): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(BITE_DAY_STORAGE_KEY, String(Math.max(1, Math.floor(biteDay))));
 }
 
 /** Random Harptos date for campaign day 1 — typical post–Time of Troubles DR range. */
