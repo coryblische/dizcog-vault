@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: dizcog-vault
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /opt/render/project/src/data
+      - key: LEDGER_PASSWORD
+        sync: false
+      - key: LEDGER_AUTH_SECRET
+        generateValue: true

@@ -1,0 +1,30 @@
+{
+  "name": "mining-sim",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server/index.ts --dev",
+    "dev:vite": "vite",
+    "dev:netlify": "netlify dev",
+    "build": "tsc -b && vite build",
+    "start": "tsx server/index.ts",
+    "preview": "npm run build && npm start"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.2.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tsx": "^4.20.3"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.8.2",
+    "@tailwindcss/vite": "^4.1.8",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "@vitejs/plugin-react": "^4.5.2",
+    "tailwindcss": "^4.1.8",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

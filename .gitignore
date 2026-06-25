@@ -1,0 +1,15 @@
+node_modules
+dist
+.DS_Store
+*.local
+.env
+.env.*
+
+# Private vault PIN reference (generate locally — see README)
+public/vault-pincode.png
+
+# Local Netlify folder
+.netlify
+
+# Ledger persistence (Node server)
+data/
