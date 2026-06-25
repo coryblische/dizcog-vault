@@ -3,6 +3,7 @@ import { ArcaneBackdrop, ArcanePanel, ArcaneSigil } from "./arcane-ui";
 import { DethekGlyph } from "./dethek-glyphs";
 import { login } from "./api";
 import { PIN_LENGTH, PINPAD_RUNES, type Rune } from "./runes";
+import { SITE_COPY } from "./site-content";
 
 const PINPAD_SETTLE_MS = 1500;
 const PINPAD_TICK_MS = 100;
@@ -247,13 +248,13 @@ export default function LoginGate({ onSuccess }: { onSuccess: () => void }) {
         <div className="text-center">
           <ArcaneSigil size={44} className="mx-auto mb-3 text-copper-light" />
           <h1 className="font-display text-2xl font-bold tracking-widest text-copper-light">
-            Cogspanner &amp; Co., Inc.
+            {SITE_COPY.companyName}
           </h1>
           <p className="mt-1 font-display text-xs tracking-[0.25em] text-arcane uppercase">
-            DizCog™ Arcane Vault
+            {SITE_COPY.vaultTitle}
           </p>
           <p className="mt-3 text-sm text-parchment-dark italic">
-          DizCog™ Arcanoglyphic Cipher Seal® guards the company ledger with the power of Mystra, Rock, and Stone. Tap the rune sequence and enter.
+            {SITE_COPY.loginBlurb}
           </p>
         </div>
 

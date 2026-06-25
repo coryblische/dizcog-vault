@@ -5,6 +5,7 @@ import {
   calcWeeklyOperatingCost,
   DEFAULT_CONFIG,
   getOutcome,
+  ledgerTotalsFromHistory,
   ROLL_OUTCOMES,
   rollD6,
   simulateWeek,
@@ -27,6 +28,7 @@ import type {
   WeekLedgerEntry,
 } from "./types";
 import { isWeekEntry, normalizeLedgerHistory } from "./types";
+import { SITE_COPY } from "./site-content";
 
 function DieFace({
   value,
@@ -130,9 +132,15 @@ function CompactCoins({ amountGp, className = "" }: { amountGp: number; classNam
 const INFUSION_STYLE = "text-arcane-light border-arcane/40 bg-arcane/10";
 const HISTORY_PAGE_SIZE = 6;
 
-function LastSettlementPanel({ record }: { record: WeekLedgerEntry }) {
+function LastSettlementPanel({
+  record,
+  className = "",
+}: {
+  record: WeekLedgerEntry;
+  className?: string;
+}) {
   return (
-    <ArcanePanel className="mt-12">
+    <ArcanePanel className={`min-w-0 flex-1 lg:max-w-xs ${className}`}>
       <h2 className="mb-2 font-display text-xs font-bold tracking-wider text-brass uppercase sm:text-sm">
         Last Settlement
       </h2>
@@ -159,7 +167,17 @@ function LastSettlementPanel({ record }: { record: WeekLedgerEntry }) {
   );
 }
 
-function LedgerHistory({ history }: { history: LedgerEntry[] }) {
+function LedgerHistory({
+  history,
+  currentWeek,
+  onVoidEntry,
+  onRerollWeek,
+}: {
+  history: LedgerEntry[];
+  currentWeek: number;
+  onVoidEntry: (entryId: string) => void;
+  onRerollWeek: (entryId: string) => void;
+}) {
   const [page, setPage] = useState(0);
 
   const totalPages = Math.max(1, Math.ceil(history.length / HISTORY_PAGE_SIZE));
@@ -183,9 +201,14 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
   return (
     <ArcanePanel>
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <h2 className="font-display text-lg font-bold tracking-wider text-brass uppercase">
-          Ledger History
-        </h2>
+        <div>
+          <h2 className="font-display text-lg font-bold tracking-wider text-brass uppercase">
+            Ledger History
+          </h2>
+          <p className="mt-1 text-xs text-parchment-dark italic">
+            Only the current week may be re-rolled. Entries may be voided — never hand-edited.
+          </p>
+        </div>
         {history.length > HISTORY_PAGE_SIZE && (
           <p className="font-display text-xs tracking-wider text-parchment-dark uppercase">
             {rangeStart}–{rangeEnd} of {history.length}
@@ -208,11 +231,34 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
                   </p>
                   <p className="text-sm opacity-90">{entry.outcome.name}</p>
                 </div>
-                <CurrencyDisplay
-                  amountGp={entry.netProfitGp}
-                  size="sm"
-                  className={`shrink-0 ${entry.netProfitGp >= 0 ? "text-brass-light" : "text-red-400"}`}
-                />
+                <div className="flex shrink-0 items-start gap-1">
+                  <CurrencyDisplay
+                    amountGp={entry.netProfitGp}
+                    size="sm"
+                    className={entry.netProfitGp >= 0 ? "text-brass-light" : "text-red-400"}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => onRerollWeek(entry.id)}
+                    disabled={entry.week !== currentWeek}
+                    className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-arcane/50 hover:text-arcane-light disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-copper/30 disabled:hover:text-parchment-dark"
+                    title={
+                      entry.week === currentWeek
+                        ? "Re-roll this week's d6"
+                        : "Only the current week can be re-rolled"
+                    }
+                  >
+                    Reroll
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onVoidEntry(entry.id)}
+                    className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-red-400/50 hover:text-red-400"
+                    title="Strike entry from ledger"
+                  >
+                    Void
+                  </button>
+                </div>
               </div>
               <dl className="mt-3 grid grid-cols-1 gap-2 border-t border-current/20 pt-2 text-sm">
                 <div className="flex justify-between gap-2">
@@ -248,7 +294,17 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
                     After week {entry.week} · {entry.detail}
                   </p>
                 </div>
-                <CurrencyDisplay amountGp={entry.amountGp} size="sm" className="text-arcane-light" />
+                <div className="flex shrink-0 items-start gap-2">
+                  <CurrencyDisplay amountGp={entry.amountGp} size="sm" className="text-arcane-light" />
+                  <button
+                    type="button"
+                    onClick={() => onVoidEntry(entry.id)}
+                    className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-red-400/50 hover:text-red-400"
+                    title="Strike entry from ledger"
+                  >
+                    Void
+                  </button>
+                </div>
               </div>
             </div>
           ),
@@ -266,6 +322,7 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
               <th className="w-[18%] pb-2 pr-2 text-right">Gross</th>
               <th className="w-[18%] pb-2 pr-2 text-right">Costs</th>
               <th className="w-[18%] pb-2 text-right">Net</th>
+              <th className="w-24 pb-2 text-right" />
             </tr>
           </thead>
           <tbody>
@@ -286,9 +343,33 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
                     <CompactCoins amountGp={-entry.operatingCostGp} className="inline-block text-red-400/80" />
                   </td>
                   <td
-                    className={`py-2 text-right font-semibold ${entry.netProfitGp >= 0 ? "text-brass-light" : "text-red-400"}`}
+                    className={`py-2 pr-2 text-right font-semibold ${entry.netProfitGp >= 0 ? "text-brass-light" : "text-red-400"}`}
                   >
                     <CompactCoins amountGp={entry.netProfitGp} className="inline-block" />
+                  </td>
+                  <td className="py-2 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => onRerollWeek(entry.id)}
+                        disabled={entry.week !== currentWeek}
+                        className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-arcane/50 hover:text-arcane-light disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-copper/30 disabled:hover:text-parchment-dark"
+                        title={
+                          entry.week === currentWeek
+                            ? "Re-roll this week's d6"
+                            : "Only the current week can be re-rolled"
+                        }
+                      >
+                        Reroll
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onVoidEntry(entry.id)}
+                        className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-red-400/50 hover:text-red-400"
+                      >
+                        Void
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ) : (
@@ -303,8 +384,17 @@ function LedgerHistory({ history }: { history: LedgerEntry[] }) {
                     <CompactCoins amountGp={entry.amountGp} className="inline-block text-arcane-light" />
                   </td>
                   <td className="py-2 pr-2 text-right text-parchment-dark/40">—</td>
-                  <td className="py-2 text-right font-semibold text-arcane-light">
+                  <td className="py-2 pr-2 text-right font-semibold text-arcane-light">
                     <CompactCoins amountGp={entry.amountGp} className="inline-block" />
+                  </td>
+                  <td className="py-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => onVoidEntry(entry.id)}
+                      className="rounded border border-copper/30 px-1.5 py-0.5 font-display text-[10px] tracking-wider text-parchment-dark uppercase transition hover:border-red-400/50 hover:text-red-400"
+                    >
+                      Void
+                    </button>
                   </td>
                 </tr>
               ),
@@ -345,9 +435,17 @@ function toSnapshot(
   guardCount: number,
   startingTreasury: number,
 ): SavedLedger {
+  const config = { ...state.config, guardCount, startingTreasuryGp: startingTreasury };
+  const { treasuryGp, week } = ledgerTotalsFromHistory(
+    state.history,
+    config,
+    startingTreasury,
+    state.startupPaid,
+  );
+
   return {
-    treasuryGp: state.treasuryGp,
-    week: state.week,
+    treasuryGp,
+    week,
     startupPaid: state.startupPaid,
     history: state.history,
     guardCount,
@@ -386,12 +484,25 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
     loadLedger()
       .then((saved) => {
         if (saved) {
+          const history = normalizeLedgerHistory(saved.history as unknown[]);
+          const config = {
+            ...DEFAULT_CONFIG,
+            guardCount: saved.guardCount,
+            startingTreasuryGp: saved.startingTreasury,
+          };
+          const { treasuryGp, week } = ledgerTotalsFromHistory(
+            history,
+            config,
+            saved.startingTreasury,
+            saved.startupPaid,
+          );
+
           setState((s) => ({
             ...s,
-            treasuryGp: saved.treasuryGp,
-            week: saved.week,
+            treasuryGp,
+            week,
             startupPaid: saved.startupPaid,
-            history: normalizeLedgerHistory(saved.history as unknown[]),
+            history,
             lastRoll: null,
             isRolling: false,
           }));
@@ -443,24 +554,38 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
   const startupCost = calcStartupCost(config);
   const weeklyCost = calcWeeklyOperatingCost(config);
   const monthlyCost = calcMonthlyOperatingCost(config);
-  const netToDate = state.treasuryGp - startingTreasury;
+  const { treasuryGp, week: ledgerWeek } = useMemo(
+    () => ledgerTotalsFromHistory(state.history, config, startingTreasury, state.startupPaid),
+    [state.history, config, startingTreasury, state.startupPaid],
+  );
+  const netToDate = treasuryGp - startingTreasury;
 
   const payStartup = useCallback(() => {
     if (state.startupPaid) return;
-    if (state.treasuryGp < startupCost) return;
+    if (treasuryGp < startupCost) return;
     setStartupCelebrating(true);
-    setState((s) => ({
-      ...s,
-      treasuryGp: s.treasuryGp - startupCost,
-      startupPaid: true,
-      config: { ...s.config, guardCount, startingTreasuryGp: startingTreasury },
-    }));
+    setState((s) => {
+      const nextConfig = { ...s.config, guardCount, startingTreasuryGp: startingTreasury };
+      const { treasuryGp, week } = ledgerTotalsFromHistory(
+        s.history,
+        nextConfig,
+        startingTreasury,
+        true,
+      );
+      return {
+        ...s,
+        startupPaid: true,
+        treasuryGp,
+        week,
+        config: nextConfig,
+      };
+    });
     window.setTimeout(() => setStartupCelebrating(false), 2800);
-  }, [state.startupPaid, state.treasuryGp, startupCost, guardCount, startingTreasury]);
+  }, [state.startupPaid, treasuryGp, startupCost, guardCount, startingTreasury]);
 
   const runWeek = useCallback(() => {
     if (!state.startupPaid || state.isRolling) return;
-    if (state.treasuryGp < weeklyCost) return;
+    if (treasuryGp < weeklyCost) return;
 
     setState((s) => ({ ...s, isRolling: true, lastRoll: null }));
 
@@ -471,20 +596,29 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
       if (ticks >= 8) {
         clearInterval(interval);
         const finalRoll = rollD6();
-        const weekNum = state.week + 1;
+        const weekNum = ledgerWeek + 1;
         const record = simulateWeek(config, weekNum, finalRoll);
 
-        setState((s) => ({
-          ...s,
-          week: weekNum,
-          treasuryGp: s.treasuryGp + record.netProfitGp,
-          history: [record, ...s.history],
-          lastRoll: finalRoll,
-          isRolling: false,
-        }));
+        setState((s) => {
+          const history = [record, ...s.history];
+          const { treasuryGp, week } = ledgerTotalsFromHistory(
+            history,
+            config,
+            startingTreasury,
+            s.startupPaid,
+          );
+          return {
+            ...s,
+            history,
+            treasuryGp,
+            week,
+            lastRoll: finalRoll,
+            isRolling: false,
+          };
+        });
       }
     }, 80);
-  }, [state.startupPaid, state.isRolling, state.treasuryGp, state.week, weeklyCost, config]);
+  }, [state.startupPaid, state.isRolling, treasuryGp, ledgerWeek, weeklyCost, config, startingTreasury]);
 
   const reset = useCallback(() => {
     setState({
@@ -502,8 +636,8 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
     state.history.find((entry): entry is WeekLedgerEntry => isWeekEntry(entry)) ?? null;
   const currentOutcome =
     state.lastRoll !== null ? getOutcome(state.lastRoll) : null;
-  const canOperate = state.startupPaid && state.treasuryGp >= weeklyCost;
-  const needsCapitalInfusion = state.startupPaid && state.treasuryGp < weeklyCost;
+  const canOperate = state.startupPaid && treasuryGp >= weeklyCost;
+  const needsCapitalInfusion = state.startupPaid && treasuryGp < weeklyCost;
 
   const infuseCapital = useCallback((amountGp: number) => {
     if (amountGp <= 0) return;
@@ -511,17 +645,97 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
       const entry: InfusionLedgerEntry = {
         kind: "infusion",
         id: `infusion-${Date.now()}`,
-        week: s.week,
+        week: ledgerWeek,
         amountGp,
         detail: formatCoinBreakdown(amountGp),
       };
+      const history = [entry, ...s.history];
+      const mineConfig = { ...s.config, guardCount, startingTreasuryGp: startingTreasury };
+      const { treasuryGp, week } = ledgerTotalsFromHistory(
+        history,
+        mineConfig,
+        startingTreasury,
+        s.startupPaid,
+      );
       return {
         ...s,
-        treasuryGp: s.treasuryGp + amountGp,
-        history: [entry, ...s.history],
+        history,
+        treasuryGp,
+        week,
       };
     });
-  }, []);
+  }, [startingTreasury, guardCount, ledgerWeek]);
+
+  const rerollWeekEntry = useCallback(
+    (entryId: string) => {
+      const entry = state.history.find((item) => item.id === entryId);
+      if (!entry || !isWeekEntry(entry) || entry.week !== ledgerWeek) return;
+
+      if (
+        !window.confirm(
+          "Re-roll this week's d6? The current settlement will be replaced — not hand-edited.",
+        )
+      ) {
+        return;
+      }
+
+      setState((s) => {
+        const index = s.history.findIndex((item) => item.id === entryId);
+        if (index < 0) return s;
+
+        const current = s.history[index];
+        if (!isWeekEntry(current) || current.week !== ledgerWeek) return s;
+
+        const mineConfig = {
+          ...s.config,
+          guardCount,
+          startingTreasuryGp: startingTreasury,
+        };
+        const rerolled = simulateWeek(mineConfig, current.week, rollD6());
+        const history = [...s.history];
+        history[index] = { ...rerolled, id: current.id };
+
+        const { treasuryGp, week } = ledgerTotalsFromHistory(
+          history,
+          mineConfig,
+          startingTreasury,
+          s.startupPaid,
+        );
+
+        return { ...s, history, treasuryGp, week, lastRoll: rerolled.roll };
+      });
+    },
+    [state.history, ledgerWeek, startingTreasury, guardCount],
+  );
+
+  const voidEntry = useCallback(
+    (entryId: string) => {
+      if (
+        !window.confirm(
+          "Strike this entry from the ledger? Treasury will be recalculated. (Cooking the Books is not permitted.)",
+        )
+      ) {
+        return;
+      }
+
+      setState((s) => {
+        const history = s.history.filter((entry) => entry.id !== entryId);
+        const mineConfig = {
+          ...s.config,
+          guardCount,
+          startingTreasuryGp: startingTreasury,
+        };
+        const { treasuryGp, week } = ledgerTotalsFromHistory(
+          history,
+          mineConfig,
+          startingTreasury,
+          s.startupPaid,
+        );
+        return { ...s, history, treasuryGp, week };
+      });
+    },
+    [startingTreasury, guardCount],
+  );
 
   const saveLabel =
     saveStatus === "saving"
@@ -539,23 +753,17 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
       <ArcaneBackdrop />
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8">
-        {lastWeekRecord && (
-          <div className="relative z-20 mb-4 ml-auto w-full max-w-[17rem] sm:absolute sm:top-0 sm:right-4 sm:mb-0">
-            <LastSettlementPanel record={lastWeekRecord} />
-          </div>
-        )}
-
-        <header className={`mb-8 text-center ${lastWeekRecord ? "sm:pr-52" : ""}`}>
+        <header className="mb-8 text-center">
           <div className="mb-2 flex items-center justify-center gap-3">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-copper to-transparent" />
             <ArcaneSigil size={32} className="text-copper-light" />
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-copper to-transparent" />
           </div>
           <h1 className="font-display text-3xl font-bold tracking-widest text-copper-light md:text-4xl">
-            Cogspanner &amp; Co., Inc.
+            {SITE_COPY.companyName}
           </h1>
           <p className="mt-1 font-display text-sm tracking-[0.3em] text-arcane uppercase">
-            Weekly Income Ledger — Diz Cogspanner
+            {SITE_COPY.ledgerSubtitle}
           </p>
           <p className="mt-2 text-parchment-dark italic">
             Arcane-powered accounting engine for your D&amp;D gold mine
@@ -579,10 +787,9 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
         </header>
 
         <div className="space-y-6">
-          <div className="grid min-w-0 gap-6 lg:grid-cols-2">
-            <ArcanePanel
-              className={`min-w-0 transition-colors duration-500 ${startupCelebrating ? "animate-startup-flash" : ""}`}
-            >
+          <ArcanePanel
+            className={`min-w-0 transition-colors duration-500 ${startupCelebrating ? "animate-startup-flash" : ""}`}
+          >
               <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
                 <div>
                   <p className="font-display text-xs tracking-widest text-brass uppercase">
@@ -590,14 +797,14 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
                   </p>
                   <div className="mt-1">
                     <CurrencyDisplay
-                      amountGp={state.treasuryGp}
+                      amountGp={treasuryGp}
                       size="lg"
                       className="font-display font-bold text-brass-light"
                     />
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-parchment-dark">Week {state.week}</p>
+                  <p className="text-sm text-parchment-dark">Week {ledgerWeek}</p>
                   <p
                     className={`flex items-center justify-end gap-1 text-lg font-semibold ${netToDate >= 0 ? "text-brass-light" : "text-red-400"}`}
                   >
@@ -607,40 +814,40 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
                 </div>
               </div>
 
-              <div className="mb-6 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-                <DieFace
-                  value={state.lastRoll}
-                  rolling={state.isRolling}
-                  startupComplete={startupCelebrating}
-                />
-                {startupCelebrating && (
-                  <div className="animate-fade-in-up rounded border-2 border-brass/60 bg-brass/10 px-4 py-3 text-center">
-                    <p className="font-display text-lg font-bold text-brass-light">
-                      Mine Operational
-                    </p>
-                    <p className="text-sm text-parchment-dark italic">
-                      Startup costs settled — shafts cleared for production
-                    </p>
-                  </div>
-                )}
-                {!startupCelebrating && currentOutcome && !state.isRolling && (
-                  <div
-                    className={`rounded border-2 px-4 py-3 text-center ${TONE_STYLES[currentOutcome.tone]}`}
-                  >
-                    <p className="font-display text-lg font-bold">{currentOutcome.name}</p>
-                    <p className="text-sm opacity-80">{currentOutcome.description}</p>
-                    {lastWeekRecord && (
-                      <p className="mt-2 text-xs italic">{lastWeekRecord.detail}</p>
-                    )}
-                  </div>
-                )}
+              <div className="mb-6 flex flex-col items-stretch gap-4 lg:flex-row lg:items-start lg:justify-center">
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center lg:flex-1">
+                  <DieFace
+                    value={state.lastRoll}
+                    rolling={state.isRolling}
+                    startupComplete={startupCelebrating}
+                  />
+                  {startupCelebrating && (
+                    <div className="animate-fade-in-up rounded border-2 border-brass/60 bg-brass/10 px-4 py-3 text-center">
+                      <p className="font-display text-lg font-bold text-brass-light">
+                        Mine Operational
+                      </p>
+                      <p className="text-sm text-parchment-dark italic">
+                        Startup costs settled — shafts cleared for production
+                      </p>
+                    </div>
+                  )}
+                  {!startupCelebrating && currentOutcome && !state.isRolling && (
+                    <div
+                      className={`rounded border-2 px-4 py-3 text-center ${TONE_STYLES[currentOutcome.tone]}`}
+                    >
+                      <p className="font-display text-lg font-bold">{currentOutcome.name}</p>
+                      <p className="text-sm opacity-80">{currentOutcome.description}</p>
+                    </div>
+                  )}
+                </div>
+                {lastWeekRecord && <LastSettlementPanel record={lastWeekRecord} />}
               </div>
 
               <div className="flex flex-wrap justify-center gap-3">
                 {!state.startupPaid ? (
                   <button
                     onClick={payStartup}
-                    disabled={state.treasuryGp < startupCost}
+                    disabled={treasuryGp < startupCost}
                     className={`inline-flex flex-wrap items-center justify-center gap-1 ${arcaneButtonClass}`}
                   >
                     Pay Startup (
@@ -681,46 +888,14 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
                   <InfuseCapitalForm onInfuse={infuseCapital} compact />
                 </div>
               )}
-              </ArcanePanel>
+          </ArcanePanel>
 
-            <ArcanePanel className="min-w-0">
-                <h2 className="mb-3 font-display text-sm font-bold tracking-wider text-brass uppercase lg:text-base">
-                  DM Weekly Income (d6)
-                </h2>
-                <div className="grid gap-2">
-                  {ROLL_OUTCOMES.map((o) => (
-                    <div
-                      key={o.roll}
-                      className={`flex items-start gap-2 rounded border p-2 ${TONE_STYLES[o.tone]}`}
-                    >
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-current font-display text-sm font-bold">
-                        {o.roll}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="font-display text-sm font-semibold">{o.name}</p>
-                        <p className="text-xs opacity-80">
-                          {o.profitGp !== null ? (
-                            <span className="inline-flex items-center gap-1">
-                              <CurrencyDisplay amountGp={o.profitGp} size="sm" /> profit
-                            </span>
-                          ) : o.roll === 1 ? (
-                            "Cave-in, losses"
-                          ) : o.roll === 5 ? (
-                            <span className="inline-flex items-center gap-1">
-                              300+ <CoinIcon type="gp" size={12} /> profit
-                            </span>
-                          ) : (
-                            "Special event"
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ArcanePanel>
-          </div>
-
-          <LedgerHistory history={state.history} />
+          <LedgerHistory
+            history={state.history}
+            currentWeek={ledgerWeek}
+            onVoidEntry={voidEntry}
+            onRerollWeek={rerollWeekEntry}
+          />
 
           <div className="grid gap-6 lg:grid-cols-2">
             <ArcanePanel>
@@ -792,7 +967,7 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
                   step={50}
                   value={startingTreasury}
                   onChange={(e) => setStartingTreasury(Number(e.target.value))}
-                  disabled={state.week > 0 || state.startupPaid}
+                  disabled={ledgerWeek > 0 || state.startupPaid}
                   className="mt-1 w-full rounded border border-brass/40 bg-panel px-3 py-2 text-brass-light outline-none focus:border-brass disabled:opacity-50"
                 />
               </label>
@@ -804,13 +979,49 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
                   max={10}
                   value={guardCount}
                   onChange={(e) => setGuardCount(Number(e.target.value))}
-                  disabled={state.week > 0}
+                  disabled={ledgerWeek > 0}
                   className="mt-1 w-full rounded border border-brass/40 bg-panel px-3 py-2 text-brass-light outline-none focus:border-brass disabled:opacity-50"
                 />
               </label>
               <InfuseCapitalForm onInfuse={infuseCapital} />
             </ArcanePanel>
           </div>
+
+          <ArcanePanel className="min-w-0">
+            <h2 className="mb-3 font-display text-sm font-bold tracking-wider text-brass uppercase">
+              DM Weekly Income (d6)
+            </h2>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {ROLL_OUTCOMES.map((o) => (
+                <div
+                  key={o.roll}
+                  className={`flex items-start gap-2 rounded border p-2 ${TONE_STYLES[o.tone]}`}
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-current font-display text-sm font-bold">
+                    {o.roll}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-display text-sm font-semibold">{o.name}</p>
+                    <p className="text-xs opacity-80">
+                      {o.profitGp !== null ? (
+                        <span className="inline-flex items-center gap-1">
+                          <CurrencyDisplay amountGp={o.profitGp} size="sm" /> profit
+                        </span>
+                      ) : o.roll === 1 ? (
+                        "Cave-in, losses"
+                      ) : o.roll === 5 ? (
+                        <span className="inline-flex items-center gap-1">
+                          300+ <CoinIcon type="gp" size={12} /> profit
+                        </span>
+                      ) : (
+                        "Special event"
+                      )}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ArcanePanel>
         </div>
 
         <footer className="mt-8 text-center text-xs text-parchment-dark/60 italic">

@@ -23,7 +23,9 @@ npm start
 
 ## Deploy (no Netlify required)
 
-The app is a static Vite build plus a small Node server (`server/`) for auth and ledger storage (JSON file on disk).
+The app is a static Vite build plus a small Node server (`server/`) for auth and ledger storage.
+
+**Content model:** like Outstatic — data lives in the Git repo under `content/`. Outstatic itself is Next.js-only; this app uses the same pattern via JSON files + GitHub API commits.
 
 ### Option A — Render (free tier)
 
@@ -70,9 +72,22 @@ Still works via `npm run dev:netlify` + `netlify deploy`, but requires Netlify c
 
 ## Persistence & auth
 
-- Password gate on load; ledger autosaves to `data/main.json` after each change.
+- Password gate on load; ledger autosaves after each change.
+- **Repo-backed content** in `content/` (see `content/README.md`):
+  - `game.json` / `site.json` — DM-editable config and copy (rebuild to apply).
+  - `ledger.json` — live campaign state.
+- With `GITHUB_TOKEN` + `GITHUB_REPO`, autosaves **commit to GitHub** (~15s debounce). Survives Render free tier restarts.
+- Without GitHub env vars, ledger writes to local `content/ledger.json` (ephemeral on free Render).
 - Password checked server-side; session stored in httpOnly cookie.
-- Blocks casual strangers from the public URL. Not bank-grade — fine for a party game ledger.
+
+### GitHub token for Render
+
+1. GitHub → Settings → Developer settings → Fine-grained token
+2. Repo access: `coryblische/dizcog-vault`
+3. Permissions: **Contents** read + write
+4. Set as `GITHUB_TOKEN` on Render
+
+**Use a private repo** if you do not want `ledger.json` treasury data public on GitHub.
 
 ## Vault PIN reference image
 

@@ -9,6 +9,10 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: GITHUB_REPO
+        value: coryblische/dizcog-vault
+      - key: GITHUB_TOKEN
+        sync: false
       - key: LEDGER_PASSWORD
         sync: false
       - key: LEDGER_AUTH_SECRET

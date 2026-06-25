@@ -1,55 +1,10 @@
-import type { MineConfig, RollOutcome, WeekLedgerEntry } from "./types";
+import gameContent from "../content/game.json";
+import type { LedgerEntry, MineConfig, RollOutcome, WeekLedgerEntry } from "./types";
+import { isWeekEntry } from "./types";
 
-export const ROLL_OUTCOMES: RollOutcome[] = [
-  {
-    roll: 1,
-    name: "Disaster",
-    description: "Cave-in, losses",
-    profitGp: null,
-    isSpecial: false,
-    tone: "disaster",
-  },
-  {
-    roll: 2,
-    name: "Poor",
-    description: "Meager vein, slim pickings",
-    profitGp: 25,
-    isSpecial: false,
-    tone: "poor",
-  },
-  {
-    roll: 3,
-    name: "Average",
-    description: "Steady work, steady yield",
-    profitGp: 75,
-    isSpecial: false,
-    tone: "average",
-  },
-  {
-    roll: 4,
-    name: "Good",
-    description: "Quality ore hauled to surface",
-    profitGp: 150,
-    isSpecial: false,
-    tone: "good",
-  },
-  {
-    roll: 5,
-    name: "Excellent",
-    description: "Rich haul from the deep shafts",
-    profitGp: null,
-    isSpecial: false,
-    tone: "excellent",
-  },
-  {
-    roll: 6,
-    name: "Rich Vein Found",
-    description: "Special event — fortune smiles!",
-    profitGp: null,
-    isSpecial: true,
-    tone: "rich",
-  },
-];
+export const ROLL_OUTCOMES: RollOutcome[] = gameContent.rollOutcomes as RollOutcome[];
+
+export const DEFAULT_CONFIG: MineConfig = gameContent.defaultConfig as MineConfig;
 
 export function rollD6(): number {
   return Math.floor(Math.random() * 6) + 1;
@@ -161,21 +116,39 @@ export function simulateWeek(
   };
 }
 
-export const DEFAULT_CONFIG: MineConfig = {
-  miningToolsGp: 150,
-  lanternOilInitialGp: 40,
-  lanternOilMonthlyGp: 10,
-  foodInitialGp: 60,
-  foodMonthlyGp: 30,
-  animalsGp: 50,
-  cartsGp: 50,
-  delgadoGpPerDay: 2,
-  minerSpPerDay: 3,
-  minerCount: 8,
-  guardGpPerDay: 2,
-  guardCount: 2,
-  cookGpPerDay: 1,
-  bookkeeperGpPerDay: 2,
-  daysPerWeek: 7,
-  startingTreasuryGp: 500,
-};
+/** Rebuild treasury and week counter from history — append-only ledger, no cooked books. */
+export function recomputeLedgerTotals(
+  history: LedgerEntry[],
+  startingTreasuryGp: number,
+  startupPaid: boolean,
+  startupCostGp: number,
+): { treasuryGp: number; week: number } {
+  let treasuryGp = startingTreasuryGp;
+  if (startupPaid) treasuryGp -= startupCostGp;
+
+  let week = 0;
+  for (const entry of [...history].reverse()) {
+    if (isWeekEntry(entry)) {
+      treasuryGp += entry.netProfitGp;
+      week = Math.max(week, entry.week);
+    } else {
+      treasuryGp += entry.amountGp;
+    }
+  }
+
+  return { treasuryGp, week };
+}
+
+export function ledgerTotalsFromHistory(
+  history: LedgerEntry[],
+  config: MineConfig,
+  startingTreasuryGp: number,
+  startupPaid: boolean,
+): { treasuryGp: number; week: number } {
+  return recomputeLedgerTotals(
+    history,
+    startingTreasuryGp,
+    startupPaid,
+    calcStartupCost(config),
+  );
+}

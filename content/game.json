@@ -1,0 +1,70 @@
+{
+  "defaultConfig": {
+    "miningToolsGp": 150,
+    "lanternOilInitialGp": 40,
+    "lanternOilMonthlyGp": 10,
+    "foodInitialGp": 60,
+    "foodMonthlyGp": 30,
+    "animalsGp": 50,
+    "cartsGp": 50,
+    "delgadoGpPerDay": 2,
+    "minerSpPerDay": 3,
+    "minerCount": 8,
+    "guardGpPerDay": 2,
+    "guardCount": 2,
+    "cookGpPerDay": 1,
+    "bookkeeperGpPerDay": 2,
+    "daysPerWeek": 7,
+    "startingTreasuryGp": 500
+  },
+  "rollOutcomes": [
+    {
+      "roll": 1,
+      "name": "Disaster",
+      "description": "Cave-in, losses",
+      "profitGp": null,
+      "isSpecial": false,
+      "tone": "disaster"
+    },
+    {
+      "roll": 2,
+      "name": "Poor",
+      "description": "Meager vein, slim pickings",
+      "profitGp": 25,
+      "isSpecial": false,
+      "tone": "poor"
+    },
+    {
+      "roll": 3,
+      "name": "Average",
+      "description": "Steady work, steady yield",
+      "profitGp": 75,
+      "isSpecial": false,
+      "tone": "average"
+    },
+    {
+      "roll": 4,
+      "name": "Good",
+      "description": "Quality ore hauled to surface",
+      "profitGp": 150,
+      "isSpecial": false,
+      "tone": "good"
+    },
+    {
+      "roll": 5,
+      "name": "Excellent",
+      "description": "Rich haul from the deep shafts",
+      "profitGp": null,
+      "isSpecial": false,
+      "tone": "excellent"
+    },
+    {
+      "roll": 6,
+      "name": "Rich Vein Found",
+      "description": "Special event — fortune smiles!",
+      "profitGp": null,
+      "isSpecial": true,
+      "tone": "rich"
+    }
+  ]
+}
