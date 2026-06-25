@@ -1,7 +1,7 @@
-/** DM lunar calendar — 31-day cycle, full moon on day 31. */
+/** Faerûn — Selûne's synodic cycle is 27 days (torilian lunar month). */
 
-export const LUNAR_CYCLE_DAYS = 31;
-export const FULL_MOON_CYCLE_DAY = 31;
+export const LUNAR_CYCLE_DAYS = 27;
+export const FULL_MOON_CYCLE_DAY = 27;
 export const DEFAULT_LUNAR_DAY = 21;
 export const INFECTED_PARTY_COUNT = 3;
 
@@ -33,6 +33,20 @@ export interface LycanthropyEffect {
   partyNote: string;
 }
 
+export function moonPhaseSymbol(phase: LunarPhase): string {
+  const symbols: Record<LunarPhase, string> = {
+    new: "🌑",
+    "waxing-crescent": "🌒",
+    "first-quarter": "🌓",
+    "waxing-gibbous": "🌔",
+    full: "🌕",
+    "waning-gibbous": "🌖",
+    "last-quarter": "🌗",
+    "waning-crescent": "🌘",
+  };
+  return symbols[phase];
+}
+
 export function dayInCycle(absoluteDay: number): number {
   if (absoluteDay <= 0) return 1;
   return ((absoluteDay - 1) % LUNAR_CYCLE_DAYS) + 1;
@@ -48,43 +62,38 @@ export function fullMoonsElapsed(absoluteDay: number): number {
 }
 
 export function daysUntilFullMoon(absoluteDay: number): number {
-  const inCycle = dayInCycle(absoluteDay);
-  if (inCycle === FULL_MOON_CYCLE_DAY) return 0;
-  return FULL_MOON_CYCLE_DAY - inCycle;
+  const rem = absoluteDay % LUNAR_CYCLE_DAYS;
+  return rem === 0 ? 0 : LUNAR_CYCLE_DAYS - rem;
+}
+
+function phaseFromCycleDay(cycleDay: number): { phase: LunarPhase; phaseLabel: string } {
+  if (cycleDay === FULL_MOON_CYCLE_DAY) {
+    return { phase: "full", phaseLabel: "Full Moon" };
+  }
+  if (cycleDay <= 3) {
+    return { phase: "waning-crescent", phaseLabel: "Waning Crescent" };
+  }
+  if (cycleDay <= 6) {
+    return { phase: "last-quarter", phaseLabel: "Last Quarter" };
+  }
+  if (cycleDay <= 9) {
+    return { phase: "waning-gibbous", phaseLabel: "Waning Gibbous" };
+  }
+  if (cycleDay <= 13) {
+    return { phase: "new", phaseLabel: "New Moon" };
+  }
+  if (cycleDay <= 16) {
+    return { phase: "waxing-crescent", phaseLabel: "Waxing Crescent" };
+  }
+  if (cycleDay <= 20) {
+    return { phase: "first-quarter", phaseLabel: "First Quarter" };
+  }
+  return { phase: "waxing-gibbous", phaseLabel: "Waxing Gibbous" };
 }
 
 export function getLunarPhaseInfo(absoluteDay: number): LunarPhaseInfo {
   const cycleDay = dayInCycle(absoluteDay);
-  const fullMoon = isFullMoonNight(absoluteDay);
-
-  let phase: LunarPhase;
-  let phaseLabel: string;
-
-  if (fullMoon) {
-    phase = "full";
-    phaseLabel = "Full Moon";
-  } else if (cycleDay <= 2) {
-    phase = "new";
-    phaseLabel = "New Moon";
-  } else if (cycleDay <= 7) {
-    phase = "waxing-crescent";
-    phaseLabel = "Waxing Crescent";
-  } else if (cycleDay <= 11) {
-    phase = "first-quarter";
-    phaseLabel = "First Quarter";
-  } else if (cycleDay <= 18) {
-    phase = "waxing-gibbous";
-    phaseLabel = "Waxing Gibbous";
-  } else if (cycleDay <= 24) {
-    phase = "waning-gibbous";
-    phaseLabel = "Waning Gibbous";
-  } else if (cycleDay <= 27) {
-    phase = "last-quarter";
-    phaseLabel = "Last Quarter";
-  } else {
-    phase = "waning-crescent";
-    phaseLabel = "Waning Crescent";
-  }
+  const { phase, phaseLabel } = phaseFromCycleDay(cycleDay);
 
   return {
     absoluteDay,
@@ -93,7 +102,7 @@ export function getLunarPhaseInfo(absoluteDay: number): LunarPhaseInfo {
     phaseLabel,
     daysUntilFullMoon: daysUntilFullMoon(absoluteDay),
     fullMoonsElapsed: fullMoonsElapsed(absoluteDay),
-    isFullMoonNight: fullMoon,
+    isFullMoonNight: isFullMoonNight(absoluteDay),
   };
 }
 
@@ -106,7 +115,7 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
 
   if (phase.isFullMoonNight) {
     return {
-      heading: `Full Moon — Night ${absoluteDay}`,
+      heading: `Full Moon — ${phase.phaseLabel}`,
       severity: "critical",
       summary:
         "When the full moon rises, the curse becomes too strong to resist. Each afflicted character involuntarily transforms.",
@@ -123,9 +132,8 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
   }
 
   const cycleDay = phase.dayInCycle;
-  const daysSinceFullMoon = cycleDay === 1 && absoluteDay > LUNAR_CYCLE_DAYS ? 1 : cycleDay;
 
-  if (daysSinceFullMoon <= 3) {
+  if (cycleDay <= 3) {
     return {
       heading: "Waning Moon — Aftermath",
       severity: "aftermath",
@@ -136,7 +144,7 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
         "Fragmented memories or nightmares of the transformation may surface.",
         "Bestial urges remain buried but present — roleplay as desired.",
         "Next involuntary transformation: full moon in " +
-          `${daysUntilFullMoon(absoluteDay)} day${daysUntilFullMoon(absoluteDay) === 1 ? "" : "s"} (day ${absoluteDay + daysUntilFullMoon(absoluteDay)}).`,
+          `${daysUntilFullMoon(absoluteDay)} day${daysUntilFullMoon(absoluteDay) === 1 ? "" : "s"}.`,
       ],
       partyNote,
     };
@@ -150,7 +158,7 @@ export function getLycanthropyEffects(absoluteDay: number): LycanthropyEffect | 
     rules: [
       "Afflicted characters function normally in humanoid form while resisting the curse.",
       "Deep bestial urges may surface in roleplay but do not force a transformation yet.",
-      `Next full moon in ${phase.daysUntilFullMoon} day${phase.daysUntilFullMoon === 1 ? "" : "s"} (day ${absoluteDay + phase.daysUntilFullMoon}).`,
+      `Next full moon in ${phase.daysUntilFullMoon} day${phase.daysUntilFullMoon === 1 ? "" : "s"}.`,
       "Remove curse: remove curse or similar magic (MM p.207).",
       `${phase.fullMoonsElapsed} full moon${phase.fullMoonsElapsed === 1 ? "" : "s"} since tracking began.`,
     ],
