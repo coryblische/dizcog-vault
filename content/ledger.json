@@ -1,8 +1,44 @@
 {
-  "treasuryGp": 1618.4666666666667,
-  "week": 4,
+  "treasuryGp": 2365.2000000000003,
+  "week": 6,
   "startupPaid": true,
   "history": [
+    {
+      "kind": "week",
+      "id": "week-6",
+      "week": 6,
+      "roll": 6,
+      "outcome": {
+        "roll": 6,
+        "name": "Rich Vein Found",
+        "description": "Special event — fortune smiles!",
+        "profitGp": null,
+        "isSpecial": true,
+        "tone": "rich"
+      },
+      "grossProfitGp": 900,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": 810.8666666666667,
+      "detail": "Rich vein discovered! Mother lode yields 900 gp this week"
+    },
+    {
+      "kind": "week",
+      "id": "week-5",
+      "week": 5,
+      "roll": 2,
+      "outcome": {
+        "roll": 2,
+        "name": "Poor",
+        "description": "Meager vein, slim pickings",
+        "profitGp": 25,
+        "isSpecial": false,
+        "tone": "poor"
+      },
+      "grossProfitGp": 25,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": -64.13333333333333,
+      "detail": "25 gp gross from ore sales"
+    },
     {
       "kind": "week",
       "id": "week-4",
@@ -85,5 +121,5 @@
   ],
   "guardCount": 2,
   "startingTreasury": 500,
-  "savedAt": "2026-06-25T18:46:16.211Z"
+  "savedAt": "2026-06-25T20:42:54.828Z"
 }
