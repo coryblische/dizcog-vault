@@ -1,9 +1,9 @@
 {
-  "treasuryGp": 500,
+  "treasuryGp": 150,
   "week": 0,
-  "startupPaid": false,
+  "startupPaid": true,
   "history": [],
   "guardCount": 2,
   "startingTreasury": 500,
-  "savedAt": "2026-06-25T20:43:10.232Z"
+  "savedAt": "2026-06-25T21:18:30.576Z"
 }
