@@ -304,8 +304,26 @@ function CurseStatusPanel({
   lastFullHarptos: ReturnType<typeof absoluteDayToHarptos>;
   nextFullHarptos: ReturnType<typeof absoluteDayToHarptos>;
 }) {
+  const daysSinceInfected = Math.max(0, campaignDay - biteDay);
+  const daysSinceInfectedLabel =
+    campaignDay < biteDay
+      ? "Not yet"
+      : daysSinceInfected === 0
+        ? "Today"
+        : `${daysSinceInfected} day${daysSinceInfected === 1 ? "" : "s"}`;
+
   const lunarStats = (
     <dl className="grid gap-x-3 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-1">
+      <div className="flex justify-between gap-3 lg:flex-col lg:justify-start">
+        <dt className="text-parchment-dark">Days since infected</dt>
+        <dd
+          className={`font-semibold tabular-nums ${
+            campaignDay >= biteDay ? "text-red-200" : "text-brass-light"
+          }`}
+        >
+          {daysSinceInfectedLabel}
+        </dd>
+      </div>
       <div className="flex justify-between gap-3 lg:flex-col lg:justify-start">
         <dt className="text-parchment-dark">Lunar cycle day</dt>
         <dd className="font-semibold text-brass-light tabular-nums">
@@ -662,12 +680,6 @@ export default function MoonTracker({
                       {biteHarptos.label} — festival date.
                     </p>
                   )}
-                  <p className="text-xs text-red-200/90">
-                    {biteHarptos.label}
-                    {biteHarptos.festival ? "" : `, DR ${biteHarptos.year}`}
-                    {" · "}
-                    Day {biteDay}
-                  </p>
                 </TrackerSection>
               </div>
             </div>
