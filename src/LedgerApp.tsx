@@ -455,11 +455,17 @@ function toSnapshot(
 
 interface LedgerAppProps {
   onLogout: () => void;
+  onOpenMoonTracker: () => void;
   loadLedger: () => Promise<SavedLedger | null>;
   saveLedger: (ledger: SavedLedger) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
-export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAppProps) {
+export default function LedgerApp({
+  onLogout,
+  onOpenMoonTracker,
+  loadLedger,
+  saveLedger,
+}: LedgerAppProps) {
   const [state, setState] = useState<GameState>(() => ({
     config: DEFAULT_CONFIG,
     treasuryGp: DEFAULT_CONFIG.startingTreasuryGp,
@@ -780,6 +786,9 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
             >
               {saveLabel}
             </span>
+            <button type="button" onClick={onOpenMoonTracker} className={arcaneButtonGhostClass}>
+              Moon Tracker
+            </button>
             <button onClick={onLogout} className={arcaneButtonGhostClass}>
               Lock vault
             </button>
@@ -1024,8 +1033,8 @@ export default function LedgerApp({ onLogout, loadLedger, saveLedger }: LedgerAp
           </ArcanePanel>
         </div>
 
-        <footer className="mt-8 text-center text-xs text-parchment-dark/60 italic">
-          Forged in copper and conjury — may your veins run gold, and your cave-ins be few.
+        <footer className="mt-8 text-center text-sm text-parchment-dark/60 italic">
+          &copy; 1493 DR, the Year of Three Ships Sailing | DizCog™ | Forged in copper and conjury — may your veins run gold, and your cave-ins be few.
         </footer>
       </div>
     </div>
