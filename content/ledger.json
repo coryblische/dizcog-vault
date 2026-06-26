@@ -1,10 +1,10 @@
 {
-  "treasuryGp": 500,
+  "treasuryGp": 400,
   "week": 0,
-  "startupPaid": false,
+  "startupPaid": true,
   "history": [],
   "guardCount": 2,
-  "startingTreasury": 500,
+  "startingTreasury": 750,
   "startupCostLines": [
     {
       "id": "cost-1782437296804-25",
@@ -69,5 +69,5 @@
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-06-26T01:28:17.458Z"
+  "savedAt": "2026-06-26T01:28:48.287Z"
 }
