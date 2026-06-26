@@ -1,8 +1,27 @@
 {
-  "treasuryGp": 400,
-  "week": 0,
+  "treasuryGp": 160.86666666666667,
+  "week": 1,
   "startupPaid": true,
-  "history": [],
+  "history": [
+    {
+      "kind": "week",
+      "id": "week-1",
+      "week": 1,
+      "roll": 1,
+      "outcome": {
+        "roll": 1,
+        "name": "Disaster",
+        "description": "Cave-in, losses",
+        "profitGp": null,
+        "isSpecial": false,
+        "tone": "disaster"
+      },
+      "grossProfitGp": -150,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": -239.13333333333333,
+      "detail": "Cave-in! Equipment damage & rescue costs: 150 gp lost"
+    }
+  ],
   "guardCount": 2,
   "startingTreasury": 750,
   "startupCostLines": [
@@ -69,5 +88,5 @@
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-06-26T01:28:48.287Z"
+  "savedAt": "2026-06-26T01:28:54.599Z"
 }
