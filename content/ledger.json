@@ -1,9 +1,73 @@
 {
-  "treasuryGp": 150,
+  "treasuryGp": 500,
   "week": 0,
-  "startupPaid": true,
+  "startupPaid": false,
   "history": [],
   "guardCount": 2,
   "startingTreasury": 500,
-  "savedAt": "2026-06-25T21:18:30.576Z"
+  "startupCostLines": [
+    {
+      "id": "cost-1782437296804-25",
+      "label": "New mining tools",
+      "amountGp": 150
+    },
+    {
+      "id": "cost-1782437296804-26",
+      "label": "Lantern oil (initial)",
+      "amountGp": 40
+    },
+    {
+      "id": "cost-1782437296804-27",
+      "label": "Food (initial)",
+      "amountGp": 60
+    },
+    {
+      "id": "cost-1782437296804-28",
+      "label": "Draft animals",
+      "amountGp": 50
+    },
+    {
+      "id": "cost-1782437296804-29",
+      "label": "Ore carts",
+      "amountGp": 50
+    }
+  ],
+  "weeklyCostLines": [
+    {
+      "id": "cost-1782437296804-30",
+      "label": "Delgado (2 gp/day)",
+      "amountGp": 14
+    },
+    {
+      "id": "cost-1782437296804-31",
+      "label": "Miners (3 sp × 8/day)",
+      "amountGp": 16.8
+    },
+    {
+      "id": "cost-1782437296804-32",
+      "label": "Guards (2 gp/day × 2)",
+      "amountGp": 28
+    },
+    {
+      "id": "cost-1782437296804-33",
+      "label": "Cook (1 gp/day)",
+      "amountGp": 7
+    },
+    {
+      "id": "cost-1782437296804-34",
+      "label": "Bookkeeper (2 gp/day)",
+      "amountGp": 14
+    },
+    {
+      "id": "cost-1782437296804-35",
+      "label": "Lantern oil (10 gp/mo)",
+      "amountGp": 2.333333333333333
+    },
+    {
+      "id": "cost-1782437296804-36",
+      "label": "Food (30 gp/mo)",
+      "amountGp": 7
+    }
+  ],
+  "savedAt": "2026-06-26T01:28:17.458Z"
 }
