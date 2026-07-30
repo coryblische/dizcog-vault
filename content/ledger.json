@@ -1,8 +1,26 @@
 {
-  "treasuryGp": 521.7333333333333,
-  "week": 2,
+  "treasuryGp": 507.6,
+  "week": 3,
   "startupPaid": true,
   "history": [
+    {
+      "kind": "week",
+      "id": "week-3",
+      "week": 3,
+      "roll": 3,
+      "outcome": {
+        "roll": 3,
+        "name": "Average",
+        "description": "Steady work, steady yield",
+        "profitGp": 75,
+        "isSpecial": false,
+        "tone": "average"
+      },
+      "grossProfitGp": 75,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": -14.133333333333326,
+      "detail": "75 gp gross from ore sales"
+    },
     {
       "kind": "week",
       "id": "week-2",
@@ -106,5 +124,5 @@
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-06-26T01:29:09.777Z"
+  "savedAt": "2026-07-30T00:28:11.982Z"
 }
