@@ -1,8 +1,26 @@
 {
-  "treasuryGp": 335.8666666666667,
-  "week": 1,
+  "treasuryGp": 396.73333333333335,
+  "week": 2,
   "startupPaid": true,
   "history": [
+    {
+      "kind": "week",
+      "id": "week-2",
+      "week": 2,
+      "roll": 4,
+      "outcome": {
+        "roll": 4,
+        "name": "Good",
+        "description": "Quality ore hauled to surface",
+        "profitGp": 150,
+        "isSpecial": false,
+        "tone": "good"
+      },
+      "grossProfitGp": 150,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": 60.866666666666674,
+      "detail": "150 gp gross from ore sales"
+    },
     {
       "kind": "week",
       "id": "week-1",
@@ -88,5 +106,5 @@
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-09-17T04:03:06.941Z"
+  "savedAt": "2026-09-17T04:05:55.445Z"
 }
