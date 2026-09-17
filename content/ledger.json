@@ -1,128 +1,73 @@
 {
-  "treasuryGp": 507.6,
-  "week": 3,
-  "startupPaid": true,
-  "history": [
-    {
-      "kind": "week",
-      "id": "week-3",
-      "week": 3,
-      "roll": 3,
-      "outcome": {
-        "roll": 3,
-        "name": "Average",
-        "description": "Steady work, steady yield",
-        "profitGp": 75,
-        "isSpecial": false,
-        "tone": "average"
-      },
-      "grossProfitGp": 75,
-      "operatingCostGp": 89.13333333333333,
-      "netProfitGp": -14.133333333333326,
-      "detail": "75 gp gross from ore sales"
-    },
-    {
-      "kind": "week",
-      "id": "week-2",
-      "week": 2,
-      "roll": 5,
-      "outcome": {
-        "roll": 5,
-        "name": "Excellent",
-        "description": "Rich haul from the deep shafts",
-        "profitGp": null,
-        "isSpecial": false,
-        "tone": "excellent"
-      },
-      "grossProfitGp": 450,
-      "operatingCostGp": 89.13333333333333,
-      "netProfitGp": 360.8666666666667,
-      "detail": "Exceptional haul: 300 gp + 150 gp bonus = 450 gp"
-    },
-    {
-      "kind": "week",
-      "id": "week-1",
-      "week": 1,
-      "roll": 1,
-      "outcome": {
-        "roll": 1,
-        "name": "Disaster",
-        "description": "Cave-in, losses",
-        "profitGp": null,
-        "isSpecial": false,
-        "tone": "disaster"
-      },
-      "grossProfitGp": -150,
-      "operatingCostGp": 89.13333333333333,
-      "netProfitGp": -239.13333333333333,
-      "detail": "Cave-in! Equipment damage & rescue costs: 150 gp lost"
-    }
-  ],
+  "treasuryGp": 750,
+  "week": 0,
+  "startupPaid": false,
+  "history": [],
   "guardCount": 2,
   "startingTreasury": 750,
   "startupCostLines": [
     {
-      "id": "cost-1782437296804-25",
+      "id": "cost-1789617751491-25",
       "label": "New mining tools",
       "amountGp": 150
     },
     {
-      "id": "cost-1782437296804-26",
+      "id": "cost-1789617751491-26",
       "label": "Lantern oil (initial)",
       "amountGp": 40
     },
     {
-      "id": "cost-1782437296804-27",
+      "id": "cost-1789617751491-27",
       "label": "Food (initial)",
       "amountGp": 60
     },
     {
-      "id": "cost-1782437296804-28",
+      "id": "cost-1789617751491-28",
       "label": "Draft animals",
       "amountGp": 50
     },
     {
-      "id": "cost-1782437296804-29",
+      "id": "cost-1789617751491-29",
       "label": "Ore carts",
       "amountGp": 50
     }
   ],
   "weeklyCostLines": [
     {
-      "id": "cost-1782437296804-30",
+      "id": "cost-1789617751491-30",
       "label": "Delgado (2 gp/day)",
       "amountGp": 14
     },
     {
-      "id": "cost-1782437296804-31",
+      "id": "cost-1789617751491-31",
       "label": "Miners (3 sp × 8/day)",
       "amountGp": 16.8
     },
     {
-      "id": "cost-1782437296804-32",
+      "id": "cost-1789617751491-32",
       "label": "Guards (2 gp/day × 2)",
       "amountGp": 28
     },
     {
-      "id": "cost-1782437296804-33",
+      "id": "cost-1789617751491-33",
       "label": "Cook (1 gp/day)",
       "amountGp": 7
     },
     {
-      "id": "cost-1782437296804-34",
+      "id": "cost-1789617751491-34",
       "label": "Bookkeeper (2 gp/day)",
       "amountGp": 14
     },
     {
-      "id": "cost-1782437296804-35",
+      "id": "cost-1789617751491-35",
       "label": "Lantern oil (10 gp/mo)",
       "amountGp": 2.333333333333333
     },
     {
-      "id": "cost-1782437296804-36",
+      "id": "cost-1789617751491-36",
       "label": "Food (30 gp/mo)",
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-07-30T00:28:11.982Z"
+  "savedAt": "2026-09-17T04:02:32.179Z"
 }
