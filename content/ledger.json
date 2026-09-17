@@ -1,8 +1,27 @@
 {
-  "treasuryGp": 750,
-  "week": 0,
-  "startupPaid": false,
-  "history": [],
+  "treasuryGp": 335.8666666666667,
+  "week": 1,
+  "startupPaid": true,
+  "history": [
+    {
+      "kind": "week",
+      "id": "week-1",
+      "week": 1,
+      "roll": 2,
+      "outcome": {
+        "roll": 2,
+        "name": "Poor",
+        "description": "Meager vein, slim pickings",
+        "profitGp": 25,
+        "isSpecial": false,
+        "tone": "poor"
+      },
+      "grossProfitGp": 25,
+      "operatingCostGp": 89.13333333333333,
+      "netProfitGp": -64.13333333333333,
+      "detail": "25 gp gross from ore sales"
+    }
+  ],
   "guardCount": 2,
   "startingTreasury": 750,
   "startupCostLines": [
@@ -69,5 +88,5 @@
       "amountGp": 7
     }
   ],
-  "savedAt": "2026-09-17T04:02:32.179Z"
+  "savedAt": "2026-09-17T04:03:06.941Z"
 }
